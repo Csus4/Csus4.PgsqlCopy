@@ -30,7 +30,7 @@ final class ChunkBuilder implements ChunkBuilderInterface
         foreach ($rows as $row) {
             $chunk[] = $row;
             if (count($chunk) === $this->limit) {
-                yield $rows;
+                yield $chunk;
                 $chunk = [];
             }
         }
