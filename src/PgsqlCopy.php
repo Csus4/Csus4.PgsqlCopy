@@ -8,12 +8,12 @@ use PDO;
 
 final class PgsqlCopy implements PgsqlCopyInterface
 {
+    private PDO $pdo;
     private string $table;
     private CsvReaderInterface $csvReader;
 
     public function __construct(
         private ChunkBuilderInterface $chunkBuilder,
-        private PDO $pdo
     ) {
     }
 
@@ -31,12 +31,12 @@ final class PgsqlCopy implements PgsqlCopyInterface
                 // @codeCoverageIgnoreEnd
             }
         }
-
         return true;
     }
 
-    public function init(string $table, CsvReaderInterface $csvReader) : void
+    public function init(PDO $pdo, string $table, CsvReaderInterface $csvReader) : void
     {
+        $this->pdo = $pdo;
         $this->table = $table;
         $this->csvReader = $csvReader;
     }

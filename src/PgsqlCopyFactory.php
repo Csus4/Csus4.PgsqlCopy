@@ -13,10 +13,10 @@ final class PgsqlCopyFactory implements PgsqlCopyFactoryInterface
     ) {
     }
 
-    public function newInstance(string $table, CsvReaderInterface $csvReader) : PgsqlCopyInterface
+    public function newInstance(\PDO $pdo, string $table, CsvReaderInterface $csvReader) : PgsqlCopyInterface
     {
         $pgsqlCopy = clone $this->pgsqlCopy;
-        $pgsqlCopy->init($table, $csvReader);
+        $pgsqlCopy->init($pdo, $table, $csvReader);
 
         return $pgsqlCopy;
     }

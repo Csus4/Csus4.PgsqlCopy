@@ -15,7 +15,7 @@ class PgsqlCopyTest extends TestCase
 
     protected function setUp() : void
     {
-        $pgsqlCopy = new PgsqlCopy(new ChunkBuilder(), new FakePdo());
+        $pgsqlCopy = new PgsqlCopy(new ChunkBuilder());
         $this->pgsqlCopyFactory = new PgsqlCopyFactory($pgsqlCopy);
     }
 
@@ -24,7 +24,7 @@ class PgsqlCopyTest extends TestCase
         $csvReader = $this->pgsqlCopyFactory->newCsvReader(__DIR__ . '/var/data/header_0.csv');
         $this->assertInstanceOf(CsvReader::class, $csvReader);
 
-        $pgsqlCopy = $this->pgsqlCopyFactory->newInstance('items', $csvReader);
+        $pgsqlCopy = $this->pgsqlCopyFactory->newInstance(new FakePdo(), 'items', $csvReader);
         $this->assertInstanceOf(PgsqlCopy::class, $pgsqlCopy);
 
         $actual = $pgsqlCopy->__invoke();
