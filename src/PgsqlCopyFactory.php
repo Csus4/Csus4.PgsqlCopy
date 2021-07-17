@@ -8,17 +8,9 @@ use SplFileObject;
 
 final class PgsqlCopyFactory implements PgsqlCopyFactoryInterface
 {
-    /**
-     * @var PgsqlCopyInterface
-     */
-    private $pgsqlCopy;
-
-    /**
-     * Factory constructor.
-     */
-    public function __construct(PgsqlCopyInterface $pgsqlCopy)
-    {
-        $this->pgsqlCopy = $pgsqlCopy;
+    public function __construct(
+        private PgsqlCopyInterface $pgsqlCopy
+    ) {
     }
 
     public function newInstance(string $table, CsvReaderInterface $csvReader) : PgsqlCopyInterface
@@ -29,12 +21,17 @@ final class PgsqlCopyFactory implements PgsqlCopyFactoryInterface
         return $pgsqlCopy;
     }
 
-    public function newCsvReader($file, string $delimiter = ',', string $nullAs = '\\\\N') : CsvReaderInterface
-    {
+    public function newCsvReader(
+        $file,
+        int $headerOffset = 0,
+        array $fields = [],
+        array $extras = [],
+        string $delimiter = ',',
+        string $nullAs = '\\\\N'
+    ) : CsvReaderInterface {
         if (is_string($file)) {
             $file = new SplFileObject($file, 'r');
         }
-
-        return new CsvReader($file, $delimiter, $nullAs);
+        return new CsvReader($file, $headerOffset, $fields, $extras, $delimiter, $nullAs);
     }
 }

@@ -8,70 +8,30 @@ use SplFileObject;
 
 final class CsvReader implements CsvReaderInterface
 {
-    /**
-     * @var SplFileObject
-     */
-    private $file;
+    private array $header = [];
+    private array $fieldsFlipped = [];
 
-    /**
-     * @var string
-     */
-    private $delimiter = ',';
-
-    /**
-     * @var string
-     */
-    private $nullAs = '\\\\N';
-
-    /**
-     * @var int
-     */
-    private $offset = -1;
-
-    /**
-     * @var array
-     */
-    private $header = [];
-
-    /**
-     * @var array
-     */
-    private $fixed = [];
-
-    /**
-     * CsvReader constructor.
-     */
-    public function __construct(SplFileObject $file, string $delimiter = ',', string $nullAs = '\\\\N')
-    {
-        $this->file = $file;
+    public function __construct(
+        private SplFileObject $file,
+        private int $headerOffset = 0,
+        private array $fields = [],
+        private array $extras = [],
+        private string $delimiter = ',',
+        private string $nullAs = '\\\\N'
+    ) {
         $this->file->setFlags(SplFileObject::READ_CSV | SplFileObject::READ_AHEAD | SplFileObject::SKIP_EMPTY);
         $this->file->setCsvControl($delimiter);
-        $this->delimiter = $delimiter;
-        $this->nullAs = $nullAs;
+        $this->file->seek($headerOffset);
+        $this->header = array_merge((array) $this->file->current(), array_keys($extras));
+        $this->fieldsFlipped = array_flip($fields);
     }
 
-    public function setHeaderOffset(int $offset) : void
+    public function getFieldsLine() : string
     {
-        $this->offset = $offset;
-        $this->file->seek($this->offset);
-        $this->header = (array) $this->file->current();
-    }
-
-    public function setHeader(array $header) : void
-    {
-        $this->header = $header;
-    }
-
-    public function setFixed(array $fixed) : void
-    {
-        $this->fixed = $fixed;
-    }
-
-    public function getHeader() : string
-    {
-        $header = array_merge($this->header, array_keys($this->fixed));
-
-        return count($header) ? implode($this->delimiter, $header) . PHP_EOL : '';
+        if (!empty($this->fields)) {
+            return implode($this->delimiter, $this->fields) . PHP_EOL;
+        }
+        return implode($this->delimiter, $this->header) . PHP_EOL;
     }
 
     public function getDelimiter() : string
@@ -86,13 +46,29 @@ final class CsvReader implements CsvReaderInterface
 
     public function getIterator()
     {
-        $pos = $this->offset + 1;
-        $this->file->seek($pos);
-        while (! $this->file->eof()) {
-            $row = array_merge((array) $this->file->current(), $this->fixed);
+        foreach ($this->file as $i => $row) {
+            if ($i <= $this->headerOffset) {
+                continue;
+            }
+            $row = array_merge((array) $row, $this->extras);
+            if (!empty($this->fields)) {
+                $row = $this->onlyTargetFields($row);
+            }
             yield $this->format($row);
-            $this->file->next();
         }
+    }
+
+    private function onlyTargetFields(array $row) : array
+    {
+        $targets = [];
+        foreach (array_combine($this->header, $row) as $key => $value) {
+            if (array_key_exists($key, $this->fieldsFlipped)) {
+                $index = $this->fieldsFlipped[$key];
+                $targets[$index] = $value;
+            }
+        }
+        ksort($targets);
+        return array_values($targets);
     }
 
     private function format(array $row) : string
