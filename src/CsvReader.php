@@ -29,6 +29,8 @@ final class CsvReader implements CsvReaderInterface
     public function setHeaderOffset(int $offset) : void
     {
         $this->headerOffset = $offset;
+        $this->file->seek($this->headerOffset);
+        $this->header = (array) $this->file->current();
     }
 
     public function setFilter(callable $filter) : void
@@ -38,8 +40,6 @@ final class CsvReader implements CsvReaderInterface
 
     public function getFieldsLine() : string
     {
-        $this->file->seek($this->headerOffset);
-        $this->header = (array) $this->file->current();
         return implode($this->delimiter, $this->fields) . PHP_EOL;
     }
 
@@ -64,11 +64,11 @@ final class CsvReader implements CsvReaderInterface
             if ($i <= $this->headerOffset) {
                 continue;
             }
-            $row = $this->onlyTargetFields($row);
-            if (count($row) !== count($this->fields)) {
+            if (count($row) !== count($this->header)) {
                 $message = sprintf('%d行目: ヘッダ行と列数が違います。', $i);
                 throw new CsvRowCountException($message);
             }
+            $row = $this->onlyTargetFields($row);
             if ($filter) {
                 $messages = $filter($row);
                 if (!empty($messages)) {
