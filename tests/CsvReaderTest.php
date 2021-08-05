@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Csus4\PgsqlCopy;
 
+use Csus4\PgsqlCopy\Exception\CsvRowCountException;
 use Csus4\PgsqlCopy\Exception\CsvRowException;
 use PHPUnit\Framework\TestCase;
 use SplFileObject;
@@ -167,6 +168,17 @@ class CsvReaderTest extends TestCase
 
         $this->expectException(CsvRowException::class);
         $this->expectExceptionMessage('1行目: コードは7文字で入力してください。');
+        foreach ($csvReader as $row) {
+            assert(is_array($row));
+        }
+    }
+
+    public function testCsvRowCount() : void
+    {
+        $fields = ['code', 'name', 'price', 'updated_at', 'hoge', 'fuga'];
+        $csvReader = new CsvReader(new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'), 0, $fields);
+        $this->expectException(CsvRowCountException::class);
+        $this->expectExceptionMessage('1行目: ヘッダ行と列数が違います。');
         foreach ($csvReader as $row) {
             assert(is_array($row));
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Csus4\PgsqlCopy;
 
+use Csus4\PgsqlCopy\Exception\CsvRowCountException;
 use Csus4\PgsqlCopy\Exception\CsvRowException;
 use SplFileObject;
 
@@ -62,6 +63,10 @@ final class CsvReader implements CsvReaderInterface
             $row = array_merge((array) $row, $this->extras);
             if (!empty($this->fields)) {
                 $row = $this->onlyTargetFields($row);
+                if (count($row) !== count($this->fields)) {
+                    $message = sprintf('%d行目: ヘッダ行と列数が違います。', $i);
+                    throw new CsvRowCountException($message);
+                }
             }
             if ($filter) {
                 $messages = $filter($row);
