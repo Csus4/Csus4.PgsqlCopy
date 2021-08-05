@@ -18,7 +18,6 @@ interface PgsqlCopyFactoryInterface
         $file,
         int $headerOffset = 0,
         array $fields = [],
-        array $extras = [],
         string $delimiter = ',',
         string $nullAs = '\\\\N'
     ) : CsvReaderInterface;

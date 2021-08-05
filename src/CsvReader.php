@@ -19,14 +19,13 @@ final class CsvReader implements CsvReaderInterface
         private SplFileObject $file,
         private int $headerOffset = 0,
         private array $fields = [],
-        private array $extras = [],
         private string $delimiter = ',',
         private string $nullAs = '\\\\N'
     ) {
         $this->file->setFlags(SplFileObject::READ_CSV | SplFileObject::READ_AHEAD | SplFileObject::SKIP_EMPTY);
         $this->file->setCsvControl($delimiter);
         $this->file->seek($headerOffset);
-        $this->header = array_merge((array) $this->file->current(), array_keys($extras));
+        $this->header = (array) $this->file->current();
         $this->fieldsFlipped = array_flip($fields);
     }
 
@@ -60,7 +59,6 @@ final class CsvReader implements CsvReaderInterface
             if ($i <= $this->headerOffset) {
                 continue;
             }
-            $row = array_merge((array) $row, $this->extras);
             if (!empty($this->fields)) {
                 $row = $this->onlyTargetFields($row);
                 if (count($row) !== count($this->fields)) {
