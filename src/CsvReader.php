@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Csus4\PgsqlCopy;
 
+use Csus4\PgsqlCopy\Exception\CsvRowException;
 use SplFileObject;
 
 final class CsvReader implements CsvReaderInterface
 {
     private array $header = [];
     private array $fieldsFlipped = [];
+    /** @var callable */
+    private $filter;
 
     public function __construct(
         private SplFileObject $file,
@@ -24,6 +27,11 @@ final class CsvReader implements CsvReaderInterface
         $this->file->seek($headerOffset);
         $this->header = array_merge((array) $this->file->current(), array_keys($extras));
         $this->fieldsFlipped = array_flip($fields);
+    }
+
+    public function setFilter(callable $filter) : void
+    {
+        $this->filter = $filter;
     }
 
     public function getFieldsLine() : string
@@ -46,6 +54,7 @@ final class CsvReader implements CsvReaderInterface
 
     public function getIterator()
     {
+        $filter = $this->filter;
         foreach ($this->file as $i => $row) {
             if ($i <= $this->headerOffset) {
                 continue;
@@ -53,6 +62,13 @@ final class CsvReader implements CsvReaderInterface
             $row = array_merge((array) $row, $this->extras);
             if (!empty($this->fields)) {
                 $row = $this->onlyTargetFields($row);
+            }
+            if ($filter) {
+                $messages = $filter($row);
+                if (!empty($messages)) {
+                    $message = sprintf('%d行目: %s', $i, implode("\n", $messages));
+                    throw new CsvRowException($message);
+                }
             }
             yield $this->format($row);
         }

@@ -13,4 +13,6 @@ interface CsvReaderInterface extends IteratorAggregate
     public function getDelimiter() : string;
 
     public function getNullAs() : string;
+
+    public function setFilter(callable $filter) : void;
 }

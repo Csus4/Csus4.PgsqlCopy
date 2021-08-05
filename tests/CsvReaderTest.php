@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Csus4\PgsqlCopy;
 
+use Csus4\PgsqlCopy\Exception\CsvRowException;
 use PHPUnit\Framework\TestCase;
 use SplFileObject;
 
@@ -151,5 +152,23 @@ class CsvReaderTest extends TestCase
         $nullAs = $csvReader->getNullAs();
         $this->assertSame(',', $delimiter);
         $this->assertSame('\\\\N', $nullAs);
+    }
+
+    public function testFilter() : void
+    {
+        $csvReader = new CsvReader(new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'));
+        $csvReader->setFilter(function (array $row) : array {
+            $messages = [];
+            if (strlen($row[0]) !== 7) {
+                $messages[] = 'コードは7文字で入力してください。';
+            }
+            return $messages;
+        });
+
+        $this->expectException(CsvRowException::class);
+        $this->expectExceptionMessage('1行目: コードは7文字で入力してください。');
+        foreach ($csvReader as $row) {
+            assert(is_array($row));
+        }
     }
 }
