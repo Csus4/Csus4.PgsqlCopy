@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Csus4\PgsqlCopy;
 
 use PHPUnit\Framework\TestCase;
+use SplFileObject;
+use SplTempFileObject;
 
 class PgsqlCopyTest extends TestCase
 {
@@ -21,10 +23,12 @@ class PgsqlCopyTest extends TestCase
 
     public function testInvoke() : void
     {
-        $csvReader = $this->pgsqlCopyFactory->newCsvReader(
-            __DIR__ . '/var/data/header_0.csv',
-            ['code', 'name', 'price'],
-        );
+        $temp = new SplTempFileObject();
+        $temp->setFlags(SplFileObject::READ_AHEAD|SplFileObject::READ_CSV);
+        $temp->fputcsv(['code', 'name', 'price']);
+        $temp->fputcsv(['000100', 'あいうえお', '1000']);
+
+        $csvReader = $this->pgsqlCopyFactory->newCsvReader($temp, ['code', 'name', 'price']);
         $this->assertInstanceOf(CsvReader::class, $csvReader);
 
         $pgsqlCopy = $this->pgsqlCopyFactory->newInstance(new FakePdo(), 'items', $csvReader);
