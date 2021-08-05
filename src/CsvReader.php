@@ -6,10 +6,13 @@ namespace Csus4\PgsqlCopy;
 
 use Csus4\PgsqlCopy\Exception\CsvRowCountException;
 use Csus4\PgsqlCopy\Exception\CsvRowException;
+use Csus4\PgsqlCopy\Exception\FieldException;
 use SplFileObject;
 
 final class CsvReader implements CsvReaderInterface
 {
+    private int $headerOffset = 0;
+    private string $delimiter;
     private array $header = [];
     private array $fieldsFlipped = [];
     /** @var callable */
@@ -17,17 +20,18 @@ final class CsvReader implements CsvReaderInterface
 
     public function __construct(
         private SplFileObject $file,
-        private int $headerOffset = 0,
-        private array $fields = [],
-        private array $extras = [],
-        private string $delimiter = ',',
+        private array $fields,
         private string $nullAs = '\\\\N'
     ) {
         $this->file->setFlags(SplFileObject::READ_CSV | SplFileObject::READ_AHEAD | SplFileObject::SKIP_EMPTY);
-        $this->file->setCsvControl($delimiter);
-        $this->file->seek($headerOffset);
-        $this->header = array_merge((array) $this->file->current(), array_keys($extras));
-        $this->fieldsFlipped = array_flip($fields);
+        $this->delimiter = $this->file->getCsvControl()[0];
+    }
+
+    public function setHeaderOffset(int $offset) : void
+    {
+        $this->headerOffset = $offset;
+        $this->file->seek($this->headerOffset);
+        $this->header = (array) $this->file->current();
     }
 
     public function setFilter(callable $filter) : void
@@ -37,10 +41,7 @@ final class CsvReader implements CsvReaderInterface
 
     public function getFieldsLine() : string
     {
-        if (!empty($this->fields)) {
-            return implode($this->delimiter, $this->fields) . PHP_EOL;
-        }
-        return implode($this->delimiter, $this->header) . PHP_EOL;
+        return implode($this->delimiter, $this->fields) . PHP_EOL;
     }
 
     public function getDelimiter() : string
@@ -55,19 +56,25 @@ final class CsvReader implements CsvReaderInterface
 
     public function getIterator()
     {
+        $this->file->seek($this->headerOffset);
+        $this->header = (array) $this->file->current();
+        $this->fieldsFlipped = array_flip($this->fields);
+
+        if ($diff = array_diff($this->fields, $this->header)) {
+            $message = sprintf('CSVファイルに必要な列がありません(%s)。', implode(',', $diff));
+            throw new FieldException($message);
+        }
+
         $filter = $this->filter;
         foreach ($this->file as $i => $row) {
             if ($i <= $this->headerOffset) {
                 continue;
             }
-            $row = array_merge((array) $row, $this->extras);
-            if (!empty($this->fields)) {
-                $row = $this->onlyTargetFields($row);
-                if (count($row) !== count($this->fields)) {
-                    $message = sprintf('%d行目: ヘッダ行と列数が違います。', $i);
-                    throw new CsvRowCountException($message);
-                }
+            if (count($row) !== count($this->header)) {
+                $message = sprintf('%d行目: ヘッダ行と列数が違います。', $i);
+                throw new CsvRowCountException($message);
             }
+            $row = $this->onlyTargetFields($row);
             if ($filter) {
                 $messages = $filter($row);
                 if (!empty($messages)) {
@@ -89,7 +96,7 @@ final class CsvReader implements CsvReaderInterface
             }
         }
         ksort($targets);
-        return array_values($targets);
+        return array_combine($this->fields, array_values($targets));
     }
 
     private function format(array $row) : string

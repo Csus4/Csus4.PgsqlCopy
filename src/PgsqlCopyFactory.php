@@ -23,15 +23,12 @@ final class PgsqlCopyFactory implements PgsqlCopyFactoryInterface
 
     public function newCsvReader(
         $file,
-        int $headerOffset = 0,
-        array $fields = [],
-        array $extras = [],
-        string $delimiter = ',',
+        array $fields,
         string $nullAs = '\\\\N'
     ) : CsvReaderInterface {
         if (is_string($file)) {
             $file = new SplFileObject($file, 'r');
         }
-        return new CsvReader($file, $headerOffset, $fields, $extras, $delimiter, $nullAs);
+        return new CsvReader($file, $fields, $nullAs);
     }
 }
