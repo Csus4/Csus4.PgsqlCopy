@@ -30,7 +30,8 @@ class CsvReaderTest extends TestCase
 
     public function testHeader1() : void
     {
-        $csvReader = new CsvReader(new SplFileObject(__DIR__ . '/var/data/header_1.csv', 'r'), 1);
+        $csvReader = new CsvReader(new SplFileObject(__DIR__ . '/var/data/header_1.csv', 'r'));
+        $csvReader->setHeaderOffset(1);
         $fields = $csvReader->getFieldsLine();
         $expect = 'code,name,price' . PHP_EOL;
         $this->assertSame($expect, $fields);
@@ -49,7 +50,6 @@ class CsvReaderTest extends TestCase
     {
         $csvReader = new CsvReader(
             new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'),
-            0,
             [],
         );
         $fields = $csvReader->getFieldsLine();
@@ -81,7 +81,6 @@ class CsvReaderTest extends TestCase
         $fields = ['code', 'name', 'price'];
         $csvReader = new CsvReader(
             new SplFileObject(__DIR__ . '/var/data/header_fields.csv', 'r'),
-            0,
             $fields,
         );
         $fields = $csvReader->getFieldsLine();
@@ -113,7 +112,6 @@ class CsvReaderTest extends TestCase
         $fields = ['name', 'code', 'price'];
         $csvReader = new CsvReader(
             new SplFileObject(__DIR__ . '/var/data/header_fields.csv', 'r'),
-            0,
             $fields,
         );
         $fields = $csvReader->getFieldsLine();
@@ -170,7 +168,7 @@ class CsvReaderTest extends TestCase
     public function testCsvRowCount() : void
     {
         $fields = ['code', 'name', 'price', 'updated_at', 'hoge', 'fuga'];
-        $csvReader = new CsvReader(new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'), 0, $fields);
+        $csvReader = new CsvReader(new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'), $fields);
         $this->expectException(CsvRowCountException::class);
         $this->expectExceptionMessage('1行目: ヘッダ行と列数が違います。');
         foreach ($csvReader as $row) {

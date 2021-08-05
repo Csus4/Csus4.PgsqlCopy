@@ -10,6 +10,7 @@ use SplFileObject;
 
 final class CsvReader implements CsvReaderInterface
 {
+    private int $headerOffset = 0;
     private array $header = [];
     private array $fieldsFlipped = [];
     /** @var callable */
@@ -17,16 +18,17 @@ final class CsvReader implements CsvReaderInterface
 
     public function __construct(
         private SplFileObject $file,
-        private int $headerOffset = 0,
         private array $fields = [],
         private string $delimiter = ',',
         private string $nullAs = '\\\\N'
     ) {
         $this->file->setFlags(SplFileObject::READ_CSV | SplFileObject::READ_AHEAD | SplFileObject::SKIP_EMPTY);
-        $this->file->setCsvControl($delimiter);
-        $this->file->seek($headerOffset);
-        $this->header = (array) $this->file->current();
-        $this->fieldsFlipped = array_flip($fields);
+        $this->file->setCsvControl($this->delimiter);
+    }
+
+    public function setHeaderOffset(int $offset) : void
+    {
+        $this->headerOffset = $offset;
     }
 
     public function setFilter(callable $filter) : void
@@ -36,6 +38,8 @@ final class CsvReader implements CsvReaderInterface
 
     public function getFieldsLine() : string
     {
+        $this->file->seek($this->headerOffset);
+        $this->header = (array) $this->file->current();
         if (!empty($this->fields)) {
             return implode($this->delimiter, $this->fields) . PHP_EOL;
         }
@@ -54,6 +58,10 @@ final class CsvReader implements CsvReaderInterface
 
     public function getIterator()
     {
+        $this->file->seek($this->headerOffset);
+        $this->header = (array) $this->file->current();
+        $this->fieldsFlipped = array_flip($this->fields);
+
         $filter = $this->filter;
         foreach ($this->file as $i => $row) {
             if ($i <= $this->headerOffset) {
