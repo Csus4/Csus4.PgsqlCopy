@@ -96,7 +96,7 @@ final class CsvReader implements CsvReaderInterface
             }
         }
         ksort($targets);
-        return array_values($targets);
+        return array_combine($this->fields, array_values($targets));
     }
 
     private function format(array $row) : string
