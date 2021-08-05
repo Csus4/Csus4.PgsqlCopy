@@ -6,6 +6,7 @@ namespace Csus4\PgsqlCopy;
 
 use Csus4\PgsqlCopy\Exception\CsvRowCountException;
 use Csus4\PgsqlCopy\Exception\CsvRowException;
+use Csus4\PgsqlCopy\Exception\FieldException;
 use SplFileObject;
 
 final class CsvReader implements CsvReaderInterface
@@ -58,6 +59,11 @@ final class CsvReader implements CsvReaderInterface
         $this->file->seek($this->headerOffset);
         $this->header = (array) $this->file->current();
         $this->fieldsFlipped = array_flip($this->fields);
+
+        if ($diff = array_diff($this->fields, $this->header)) {
+            $message = sprintf('CSVファイルに必要な列がありません(%s)。', implode(',', $diff));
+            throw new FieldException($message);
+        }
 
         $filter = $this->filter;
         foreach ($this->file as $i => $row) {
