@@ -11,6 +11,7 @@ use SplFileObject;
 final class CsvReader implements CsvReaderInterface
 {
     private int $headerOffset = 0;
+    private string $delimiter;
     private array $header = [];
     private array $fieldsFlipped = [];
     /** @var callable */
@@ -19,11 +20,10 @@ final class CsvReader implements CsvReaderInterface
     public function __construct(
         private SplFileObject $file,
         private array $fields,
-        private string $delimiter = ',',
         private string $nullAs = '\\\\N'
     ) {
         $this->file->setFlags(SplFileObject::READ_CSV | SplFileObject::READ_AHEAD | SplFileObject::SKIP_EMPTY);
-        $this->file->setCsvControl($this->delimiter);
+        $this->delimiter = $this->file->getCsvControl()[0];
     }
 
     public function setHeaderOffset(int $offset) : void
