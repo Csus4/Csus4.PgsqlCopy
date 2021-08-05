@@ -18,7 +18,7 @@ final class CsvReader implements CsvReaderInterface
 
     public function __construct(
         private SplFileObject $file,
-        private array $fields = [],
+        private array $fields,
         private string $delimiter = ',',
         private string $nullAs = '\\\\N'
     ) {
@@ -40,10 +40,7 @@ final class CsvReader implements CsvReaderInterface
     {
         $this->file->seek($this->headerOffset);
         $this->header = (array) $this->file->current();
-        if (!empty($this->fields)) {
-            return implode($this->delimiter, $this->fields) . PHP_EOL;
-        }
-        return implode($this->delimiter, $this->header) . PHP_EOL;
+        return implode($this->delimiter, $this->fields) . PHP_EOL;
     }
 
     public function getDelimiter() : string
@@ -67,12 +64,10 @@ final class CsvReader implements CsvReaderInterface
             if ($i <= $this->headerOffset) {
                 continue;
             }
-            if (!empty($this->fields)) {
-                $row = $this->onlyTargetFields($row);
-                if (count($row) !== count($this->fields)) {
-                    $message = sprintf('%d行目: ヘッダ行と列数が違います。', $i);
-                    throw new CsvRowCountException($message);
-                }
+            $row = $this->onlyTargetFields($row);
+            if (count($row) !== count($this->fields)) {
+                $message = sprintf('%d行目: ヘッダ行と列数が違います。', $i);
+                throw new CsvRowCountException($message);
             }
             if ($filter) {
                 $messages = $filter($row);

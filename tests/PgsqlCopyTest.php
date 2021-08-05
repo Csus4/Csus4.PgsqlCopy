@@ -21,7 +21,10 @@ class PgsqlCopyTest extends TestCase
 
     public function testInvoke() : void
     {
-        $csvReader = $this->pgsqlCopyFactory->newCsvReader(__DIR__ . '/var/data/header_0.csv');
+        $csvReader = $this->pgsqlCopyFactory->newCsvReader(
+            __DIR__ . '/var/data/header_0.csv',
+            ['code', 'name', 'price'],
+        );
         $this->assertInstanceOf(CsvReader::class, $csvReader);
 
         $pgsqlCopy = $this->pgsqlCopyFactory->newInstance(new FakePdo(), 'items', $csvReader);

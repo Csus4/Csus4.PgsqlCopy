@@ -13,7 +13,10 @@ class CsvReaderTest extends TestCase
 {
     public function testHeader0() : void
     {
-        $csvReader = new CsvReader(new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'));
+        $csvReader = new CsvReader(
+            new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'),
+            ['code', 'name', 'price'],
+        );
         $fields = $csvReader->getFieldsLine();
         $expect = 'code,name,price' . PHP_EOL;
         $this->assertSame($expect, $fields);
@@ -30,7 +33,10 @@ class CsvReaderTest extends TestCase
 
     public function testHeader1() : void
     {
-        $csvReader = new CsvReader(new SplFileObject(__DIR__ . '/var/data/header_1.csv', 'r'));
+        $csvReader = new CsvReader(
+            new SplFileObject(__DIR__ . '/var/data/header_1.csv', 'r'),
+            ['code', 'name', 'price'],
+        );
         $csvReader->setHeaderOffset(1);
         $fields = $csvReader->getFieldsLine();
         $expect = 'code,name,price' . PHP_EOL;
@@ -50,7 +56,7 @@ class CsvReaderTest extends TestCase
     {
         $csvReader = new CsvReader(
             new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'),
-            [],
+            ['code', 'name', 'price'],
         );
         $fields = $csvReader->getFieldsLine();
         $expect = 'code,name,price' . PHP_EOL;
@@ -109,10 +115,9 @@ class CsvReaderTest extends TestCase
 
     public function testFieldsDifferentOrder() : void
     {
-        $fields = ['name', 'code', 'price'];
         $csvReader = new CsvReader(
             new SplFileObject(__DIR__ . '/var/data/header_fields.csv', 'r'),
-            $fields,
+            ['name', 'code', 'price'],
         );
         $fields = $csvReader->getFieldsLine();
         $expect = 'name,code,price' . PHP_EOL;
@@ -140,7 +145,10 @@ class CsvReaderTest extends TestCase
 
     public function testGetter() : void
     {
-        $csvReader = new CsvReader(new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'));
+        $csvReader = new CsvReader(
+            new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'),
+            []
+        );
         $delimiter = $csvReader->getDelimiter();
         $nullAs = $csvReader->getNullAs();
         $this->assertSame(',', $delimiter);
@@ -149,7 +157,10 @@ class CsvReaderTest extends TestCase
 
     public function testFilter() : void
     {
-        $csvReader = new CsvReader(new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'));
+        $csvReader = new CsvReader(
+            new SplFileObject(__DIR__ . '/var/data/header_0.csv', 'r'),
+            ['name', 'code', 'price'],
+        );
         $csvReader->setFilter(function (array $row) : array {
             $messages = [];
             if (strlen($row[0]) !== 7) {
